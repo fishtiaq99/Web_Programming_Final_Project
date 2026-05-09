@@ -5,23 +5,27 @@ const api = axios.create({
   withCredentials: true,
 });
 
-// Response interceptor — handle expired/invalid tokens
+// Attach token from localStorage if present (for cross-domain production)
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem('ignite_token');
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Handle expired/invalid tokens
 api.interceptors.response.use(
   response => response,
   error => {
     const status = error.response?.status;
     const currentPath = window.location.pathname;
-
-    // If 401 or 403 and not already on login/signup page
     if ((status === 401 || status === 403) &&
         !currentPath.includes('/login') &&
         !currentPath.includes('/signup')) {
-
-      // Clear any stale state and redirect to login
-      document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+      localStorage.removeItem('ignite_token');
       window.location.href = '/login';
     }
-
     return Promise.reject(error);
   }
 );

@@ -13,25 +13,36 @@ export function AuthProvider({ children }) {
     fetched.current = true;
     api.get('/auth/me')
       .then(res => setUser(res.data))
-      .catch(() => setUser(null))
+      .catch(() => {
+        setUser(null);
+        localStorage.removeItem('ignite_token');
+      })
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (email, password, isAdmin = false) => {
     const endpoint = isAdmin ? '/auth/admin/login' : '/auth/login';
     const res = await api.post(endpoint, { email, password });
+    // Store token in localStorage for cross-domain auth
+    if (res.data.token) {
+      localStorage.setItem('ignite_token', res.data.token);
+    }
     setUser(res.data.user);
     return res.data.user;
   };
 
   const signup = async (data) => {
     const res = await api.post('/auth/signup', data);
+    if (res.data.token) {
+      localStorage.setItem('ignite_token', res.data.token);
+    }
     setUser(res.data.user);
     return res.data.user;
   };
 
   const logout = async () => {
-    await api.post('/auth/logout');
+    await api.post('/auth/logout').catch(() => {});
+    localStorage.removeItem('ignite_token');
     setUser(null);
   };
 

@@ -2,13 +2,13 @@ const jwt = require('jsonwebtoken');
 
 function authenticateToken(req, res, next) {
   // Check cookie first, then Authorization header
-  const token = req.cookies?.token || 
-    (req.headers['authorization']?.startsWith('Bearer ') 
-      ? req.headers['authorization'].split(' ')[1] 
+  const token = req.cookies?.token ||
+    (req.headers['authorization']?.startsWith('Bearer ')
+      ? req.headers['authorization'].split(' ')[1]
       : null);
 
   if (!token) {
-    return res.status(401).json({ error: 'Access denied. No token provided.' });
+    return res.status(401).json({ error: 'No token provided' });
   }
 
   try {
@@ -24,22 +24,14 @@ function authenticateToken(req, res, next) {
 }
 
 function requireAdmin(req, res, next) {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated.' });
-  }
-  if (req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Access denied. Admin only.' });
-  }
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated.' });
+  if (req.user.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
   next();
 }
 
 function requireUser(req, res, next) {
-  if (!req.user) {
-    return res.status(401).json({ error: 'Not authenticated.' });
-  }
-  if (req.user.role !== 'user') {
-    return res.status(403).json({ error: 'Access denied. Users only.' });
-  }
+  if (!req.user) return res.status(401).json({ error: 'Not authenticated.' });
+  if (req.user.role !== 'user') return res.status(403).json({ error: 'Users only.' });
   next();
 }
 
